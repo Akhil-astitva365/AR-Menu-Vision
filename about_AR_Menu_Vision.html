@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Project Plan: AR Restaurant Menu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Soft Tech -->
+    <!-- Application Structure Plan: A single-page dashboard layout is used to provide a non-linear, interactive overview of the project plan. Key sections (Vision, Features, Tech, Roadmap, Monetization) are accessible via a sticky navigation bar. The core interaction is a vertical collapsible timeline for the Development Roadmap, which allows users to explore the project's progression without being overwhelmed by details. This structure was chosen to make the dense plan more digestible, engaging, and easier for different stakeholders to navigate to their areas of interest compared to a linear document. -->
+    <!-- Visualization & Content Choices: Project Vision -> Inform -> Large text block -> None -> Sets project tone. | Core Features -> Organize -> 3-column card layout -> Hover -> Visually separates key pillars. | Tech Stack -> Organize -> Grid of cards -> Hover -> Modern, scannable presentation. | Development Roadmap -> Show Change -> Vertical Collapsible Timeline -> Click to expand/collapse phases -> Best way to visualize a phased plan interactively, reducing initial cognitive load. (HTML/JS) | Monetization -> Organize -> Grid of cards -> Hover -> Clearly delineates business strategies. No charts needed as the source is qualitative. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            background-image: radial-gradient(circle at 10% 20%, rgb(207, 244, 255) 0%, rgb(245, 245, 245) 90%);
+        }
+        
+        .dark body {
+            background-color: #020617;
+            background-image: radial-gradient(circle at 80% 20%, rgb(8, 38, 77) 0%, rgb(2, 6, 23) 90%);
+        }
+        
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-card {
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        
+        .timeline-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 40px;
+            width: 1px;
+            height: calc(100% - 20px);
+            background-color: #cbd5e1;
+            z-index: 0;
+        }
+        
+        .dark .timeline-item:not(:last-child)::before {
+            background-color: #475569;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: 8px;
+            top: 20px;
+            height: 16px;
+            width: 16px;
+            background-color: #f8fafc;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .dark .timeline-dot {
+            background-color: #1e293b;
+            border-color: #475569;
+        }
+        
+        .timeline-item.active .timeline-dot {
+            border-color: #0ea5e9;
+            transform: scale(1.1);
+        }
+        
+        .dark .timeline-item.active .timeline-dot {
+            border-color: #0ea5e9;
+        }
+        
+        .details-content {
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-10px);
+        }
+        
+        .timeline-item.active .details-content {
+            max-height: 500px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .nav-link.active {
+            color: #0c4a6e;
+        }
+        
+        .dark .nav-link.active {
+            color: #38bdf8;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 dark:text-slate-200 min-h-screen bg-fixed">
+
+    <header class="sticky top-0 z-50">
+        <div class="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-b border-white/50 dark:border-slate-300/10"></div>
+        <nav class="relative container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-slate-900 dark:text-white">AR Menu Plan</h1>
+            <div class="flex items-center">
+                <div class="hidden md:flex space-x-8 mr-8 items-center">
+                    <a href="#vision" class="nav-link text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 transition duration-300">Vision</a>
+                    <a href="#features" class="nav-link text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 transition duration-300">Core Features</a>
+                    <a href="#tech" class="nav-link text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 transition duration-300">Tech Stack</a>
+                    <a href="#roadmap" class="nav-link text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 transition duration-300">Roadmap</a>
+                    <a href="#monetization" class="nav-link text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 transition duration-300">Monetization</a>
+                </div>
+                <button id="theme-toggle" class="h-10 w-10 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 hover:bg-white/80 dark:hover:bg-slate-700/50 transition-colors">
+                    <span id="theme-toggle-dark-icon" class="hidden text-lg">🌙</span>
+                    <span id="theme-toggle-light-icon" class="hidden text-lg">☀️</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 md:py-16">
+
+        <section id="vision" class="text-center mb-20 md:mb-32">
+            <h2 class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">Project Vision</h2>
+            <p class="max-w-3xl mx-auto text-lg md:text-xl text-slate-600 dark:text-slate-300">
+                To create a unique and immersive dining experience by allowing customers to visualize food items in their own space before ordering. This enhances customer engagement, helps in making informed decisions, and provides a modern platform for restaurant feedback.
+            </p>
+        </section>
+
+        <section id="features" class="mb-20 md:mb-32">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Core Features</h2>
+                <p class="max-w-2xl mx-auto text-slate-600 dark:text-slate-300 mt-4">The application is built around three main pillars, creating a seamless and engaging user journey.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-card p-8 rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-white/50 dark:bg-slate-900/50 mb-6 border border-white/50 dark:border-slate-300/10">
+                        <div class="h-8 w-8 rounded-md border-2 border-sky-500 flex items-center justify-center">
+                            <div class="h-3 w-3 bg-sky-500 rounded-sm"></div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">QR Scan & Menu</h3>
+                    <ul class="space-y-2 text-slate-700 dark:text-slate-300 list-disc list-inside">
+                        <li>Efficient in-app QR scanner</li>
+                        <li>Unique restaurant identification</li>
+                        <li>Dynamic, categorized menu display</li>
+                    </ul>
+                </div>
+                <div class="glass-card p-8 rounded-3xl shadow-lg hover:shadow-xl hover:-translatey-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-white/50 dark:bg-slate-900/50 mb-6 border border-white/50 dark:border-slate-300/10">
+                        <div class="w-8 h-8 transform rotate-45">
+                            <div class="w-4 h-4 bg-sky-500/80 absolute top-0 left-0"></div>
+                            <div class="w-4 h-4 bg-sky-500/60 absolute top-0 right-0"></div>
+                            <div class="w-4 h-4 bg-sky-500/40 absolute bottom-0 left-0"></div>
+                            <div class="w-4 h-4 bg-sky-500 absolute bottom-0 right-0"></div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">AR Visualization</h3>
+                    <ul class="space-y-2 text-slate-700 dark:text-slate-300 list-disc list-inside">
+                        <li>View items on table via AR</li>
+                        <li>Accurate table surface detection</li>
+                        <li>Place, move, and scale 2D/3D models</li>
+                    </ul>
+                </div>
+                <div class="glass-card p-8 rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-white/50 dark:bg-slate-900/50 mb-6 border border-white/50 dark:border-slate-300/10">
+                        <span class="text-4xl text-sky-500">★</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">Reviews & Ratings</h3>
+                    <ul class="space-y-2 text-slate-700 dark:text-slate-300 list-disc list-inside">
+                        <li>Read/post restaurant & item reviews</li>
+                        <li>Rate dishes and overall experience</li>
+                        <li>Upload photos with feedback</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech" class="mb-20 md:mb-32">
+            <div class="text-center mb-16 px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Expanded Technology Stack</h2>
+                <p class="max-w-2xl mx-auto text-slate-600 dark:text-slate-300 mt-4">A modern, cross-platform stack including specific tools for state management, testing, and deployment to ensure a professional workflow.</p>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 px-6">
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">Framework</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">React Native or Flutter</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">For building cross-platform apps from a single codebase.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">AR Library</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">ViroReact or AR Foundation</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">To handle native ARKit (iOS) and ARCore (Android) functionalities.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">Backend & Database</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">Firebase</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Provides Firestore, Auth, and Storage for a complete backend solution.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">State Management</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">Zustand or Riverpod</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">For managing application state efficiently across components.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">Navigation</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">React Navigation / GoRouter</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">For handling routing and screen transitions within the app.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">Testing</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">Jest & Testing Library</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">For unit, integration, and end-to-end testing of the application.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">CI / CD</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">GitHub Actions & Fastlane</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">To automate the build, test, and deployment pipeline.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl text-center transition-shadow duration-300">
+                    <h4 class="font-bold text-lg text-slate-800 dark:text-slate-100">Analytics</h4>
+                    <p class="text-sky-700 dark:text-sky-400 font-semibold my-2">Firebase Analytics</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">To gather usage data and user insights to improve the app.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="roadmap" class="mb-20 md:mb-32">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Development Roadmap</h2>
+                <p class="max-w-2xl mx-auto text-slate-600 dark:text-slate-300 mt-4">The project is broken into four distinct phases, starting with an MVP and progressively adding advanced features. Click on a phase to expand.</p>
+            </div>
+            <div class="max-w-3xl mx-auto">
+                <div class="timeline-item relative pl-10 pb-8" data-phase="1">
+                    <div class="timeline-dot"></div>
+                    <div class="details-trigger cursor-pointer">
+                        <p class="text-sm text-sky-600 dark:text-sky-400 font-semibold">Phase 1</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white flex justify-between items-center">
+                            Foundation & MVP
+                            <span class="arrow text-xl transform transition-transform duration-300 text-slate-400">▼</span>
+                        </h3>
+                    </div>
+                    <div class="details-content mt-4">
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700 dark:text-slate-300 glass-card p-6 rounded-2xl">
+                            <li>Initialize React Native/Flutter project and set up Firebase.</li>
+                            <li>Implement user sign-up and login screens.</li>
+                            <li>Design Firestore database structure.</li>
+                            <li>Integrate QR code scanning library.</li>
+                            <li>Create the basic UI to display the menu.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="timeline-item relative pl-10 pb-8" data-phase="2">
+                    <div class="timeline-dot"></div>
+                    <div class="details-trigger cursor-pointer">
+                        <p class="text-sm text-sky-600 dark:text-sky-400 font-semibold">Phase 2</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white flex justify-between items-center">
+                            Augmented Reality Integration
+                            <span class="arrow text-xl transform transition-transform duration-300 text-slate-400">▼</span>
+                        </h3>
+                    </div>
+                    <div class="details-content mt-4">
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700 dark:text-slate-300 glass-card p-6 rounded-2xl">
+                            <li>Integrate ViroReact or chosen AR library.</li>
+                            <li>Create and source 2D/3D assets for menu items.</li>
+                            <li>Develop the AR view with plane detection.</li>
+                            <li>Connect menu items to launch the AR scene.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="timeline-item relative pl-10 pb-8" data-phase="3">
+                    <div class="timeline-dot"></div>
+                    <div class="details-trigger cursor-pointer">
+                        <p class="text-sm text-sky-600 dark:text-sky-400 font-semibold">Phase 3</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white flex justify-between items-center">
+                            Review System
+                            <span class="arrow text-xl transform transition-transform duration-300 text-slate-400">▼</span>
+                        </h3>
+                    </div>
+                    <div class="details-content mt-4">
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700 dark:text-slate-300 glass-card p-6 rounded-2xl">
+                            <li>Design and build UI for reading/writing reviews.</li>
+                            <li>Implement backend logic for posting reviews.</li>
+                            <li>Display average ratings and review lists.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="timeline-item relative pl-10" data-phase="4">
+                    <div class="timeline-dot"></div>
+                    <div class="details-trigger cursor-pointer">
+                        <p class="text-sm text-sky-600 dark:text-sky-400 font-semibold">Phase 4</p>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white flex justify-between items-center">
+                            Polish & Deployment
+                            <span class="arrow text-xl transform transition-transform duration-300 text-slate-400">▼</span>
+                        </h3>
+                    </div>
+                    <div class="details-content mt-4">
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700 dark:text-slate-300 glass-card p-6 rounded-2xl">
+                            <li>Refine UI/UX with animations and improvements.</li>
+                            <li>Conduct thorough testing on iOS and Android devices.</li>
+                            <li>Prepare and submit to Apple App Store and Google Play Store.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="monetization" class="mb-16 md:mb-24">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Monetization Strategy</h2>
+                <p class="max-w-2xl mx-auto text-slate-600 dark:text-slate-300 mt-4">For future growth, the application can be monetized through a tiered model that offers increasing value to restaurant partners.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-card p-8 rounded-2xl">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Freemium Model</h3>
+                    <p class="text-slate-700 dark:text-slate-300">Restaurants can list for free with basic features like a text-only menu to get started on the platform.</p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl ring-2 ring-sky-500/50 shadow-2xl shadow-sky-500/10">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Subscription Fee</h3>
+                    <p class="text-slate-700 dark:text-slate-300">A monthly/yearly fee unlocks premium features like AR visualization, analytics, and better visibility.</p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Featured Listings</h3>
+                    <p class="text-slate-700 dark:text-slate-300">Restaurants can pay to be featured on the app's home screen or in search results for prime exposure.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-slate-500 dark:text-slate-400 text-center py-6">
+        <p>&copy; 2025 AR Menu Project. An interactive plan.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                themeToggleLightIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleDarkIcon.classList.remove('hidden');
+            }
+
+            themeToggleBtn.addEventListener('click', function() {
+                themeToggleDarkIcon.classList.toggle('hidden');
+                themeToggleLightIcon.classList.toggle('hidden');
+
+                if (localStorage.getItem('color-theme')) {
+                    if (localStorage.getItem('color-theme') === 'light') {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('color-theme', 'dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('color-theme', 'light');
+                    }
+                } else {
+                    if (document.documentElement.classList.contains('dark')) {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('color-theme', 'light');
+                    } else {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('color-theme', 'dark');
+                    }
+                }
+            });
+
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            timelineItems.forEach(item => {
+                const trigger = item.querySelector('.details-trigger');
+                const arrow = trigger.querySelector('.arrow');
+                trigger.addEventListener('click', () => {
+                    const wasActive = item.classList.contains('active');
+                    timelineItems.forEach(i => {
+                        i.classList.remove('active');
+                        i.querySelector('.arrow').classList.remove('rotate-180');
+                    });
+                    if (!wasActive) {
+                        item.classList.add('active');
+                        arrow.classList.add('rotate-180');
+                    }
+                });
+            });
+
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, {
+                rootMargin: '-50% 0px -50% 0px'
+            });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+
+</html>
